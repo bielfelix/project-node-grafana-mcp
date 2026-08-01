@@ -1,6 +1,5 @@
-# N|Sentinel Infrastructure
+# Sentinel Infrastructure
 
-[![alumnus E2E Tests](https://github.com/erickwendel/actions/workflows/alumnus-tests.yaml/badge.svg)](https://github.com/erickwendel/actions/workflows/alumnus-tests.yaml)
 
 This directory contains the complete observability and monitoring infrastructure for N|Sentinel, including distributed tracing, metrics collection, log aggregation, and alerting.
 
