@@ -11,7 +11,7 @@ https://github.com/unipds-engenharia-de-ia-aplicada/engenharia-de-software-com-i
 
 The upstream attribution is preserved intentionally. This repository should be read as a source-attributed technical implementation, not as an original implementation of the entire stack.
 
-## What this lab demonstrates
+## What this integration demonstrates
 
 - OpenTelemetry instrumentation and collection
 - Metrics with Prometheus
@@ -73,7 +73,7 @@ Probes HTTP and network endpoints for availability.
 
 A Node.js/Fastify application instrumented with OpenTelemetry and backed by PostgreSQL.
 
-## Running the lab
+## Running the integration
 
 Requirements:
 
