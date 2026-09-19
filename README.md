@@ -1,15 +1,15 @@
 # Grafana MCP Observability Lab
 
-This repository is a study and experimentation environment for observability with OpenTelemetry, Prometheus, Grafana, Loki, Tempo and MCP-based access to telemetry.
+This repository is a technical implementation and experimentation environment for observability with OpenTelemetry, Prometheus, Grafana, Loki, Tempo and MCP-based access to telemetry.
 
 ## Attribution
 
-This repository is based on course material from the Software Engineering with Applied AI program published by UNIPDS and Erick Wendel.
+This repository is based on source material from the Software Engineering with Applied AI program published by UNIPDS and Erick Wendel.
 
 Upstream material:
 https://github.com/unipds-engenharia-de-ia-aplicada/engenharia-de-software-com-ia-aplicada
 
-The upstream attribution is preserved intentionally. This repository should be read as a learning and experimentation workspace, not as an original implementation of the entire stack.
+The upstream attribution is preserved intentionally. This repository should be read as a technical work and experimentation workspace, not as an original implementation of the entire stack.
 
 ## What this lab demonstrates
 
@@ -131,7 +131,7 @@ Example questions include:
 
 ## Why I keep this repository public
 
-The value of this repository is the hands-on study of observability concepts and the interaction between telemetry systems and MCP tooling.
+The value of this repository is the hands-on technical implementation of observability concepts and the interaction between telemetry systems and MCP tooling.
 
 I do not present the upstream example itself as original work. The repository is useful as evidence of the environment I studied, configured and explored.
 
