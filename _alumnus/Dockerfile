@@ -1,27 +1,18 @@
-FROM node:22-alpine as build
+FROM node:22-alpine AS build
 
-# Enable Corepack and prepare pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
 
-WORKDIR /app/
-
-COPY package.json /app/
-
-RUN pnpm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 
-FROM node:22-alpine as dev
+FROM node:22-alpine AS dev
 
-# Enable Corepack and prepare pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
 
-WORKDIR /app/
-
-COPY --from=build /app/node_modules node_modules
-COPY --from=build /app/package.json ./
-COPY --from=build /app .
+COPY --from=build /app /app
 
 USER node
 
-CMD pnpm run dev
+CMD ["npm", "run", "dev"]
