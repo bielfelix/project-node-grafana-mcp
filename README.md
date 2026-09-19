@@ -1,490 +1,128 @@
-# Sentinel Infrastructure
+# Grafana MCP Observability Lab
 
+This repository is a study and experimentation environment for observability with OpenTelemetry, Prometheus, Grafana, Loki, Tempo and MCP-based access to telemetry.
 
-This directory contains the complete observability and monitoring infrastructure for N|Sentinel, including distributed tracing, metrics collection, log aggregation, and alerting.
+## Attribution
 
-## 🏗️ Architecture Overview
+This repository is based on course material from the Software Engineering with Applied AI program published by UNIPDS and Erick Wendel.
 
-```
-┌─────────────┐
-│  Demo App   │ ──────┐
-└─────────────┘       │
-                      │ OTLP (gRPC)
-                      ▼
-            ┌──────────────────────┐
-            │ OpenTelemetry        │
-            │ Collector            │
-            │ (Central Hub)        │
-            └──────────────────────┘
-                      │
-        ┌─────────────┼─────────────┬─────────────┐
-        │             │             │             │
-        ▼             ▼             ▼             ▼
-   ┌────────┐   ┌────────┐   ┌────────┐   ┌────────┐
-   │ Tempo  │   │  Loki  │   │ Prom   │   │        │
-   │(Traces)│   │ (Logs) │   │(Metrics)│   │        │
-   └────────┘   └────────┘   └────────┘   └────────┘
-        │             │             │             │
-        └─────────────┴─────────────┴─────────────┘
-                      │
-                      ▼
-                ┌──────────┐
-                │ Grafana  │
-                │(Visualize)│
-                └──────────┘
-```
+Upstream material:
+https://github.com/unipds-engenharia-de-ia-aplicada/engenharia-de-software-com-ia-aplicada
 
-> **Important Note**: Applications only send telemetry data to the **OpenTelemetry Collector** using OTLP protocol. The collector then distributes this data to the appropriate backend systems (Tempo, Loki, Prometheus) based on the data type.
+The upstream attribution is preserved intentionally. This repository should be read as a learning and experimentation workspace, not as an original implementation of the entire stack.
 
-## 📦 Components
+## What this lab demonstrates
 
-### 🔄 OpenTelemetry Collector (`otel-collector/`)
-**Central telemetry data hub** that receives, processes, and exports observability data.
+- OpenTelemetry instrumentation and collection
+- Metrics with Prometheus
+- Logs with Loki
+- Traces with Tempo
+- Grafana dashboards and datasource integration
+- Blackbox monitoring
+- A Node.js/Fastify sample application
+- PostgreSQL instrumentation
+- MCP access to observability data
+- Local Docker-based infrastructure
 
-**Responsibilities**:
-- Receives OTLP data (traces, metrics, logs) from applications via gRPC (port 4317)
-- Distributes traces to **Tempo**
-- Forwards logs to **Loki** via OTLP
-- Exports metrics to **Prometheus**
-- Exposes its own metrics on port 8889
+## Architecture
 
-**Configuration**: `otel-collector/otel-collector-config.yaml`
-
-**Ports**:
-- `4317`: OTLP gRPC receiver (applications send data here)
-- `8889`: Prometheus metrics exporter (exposed to host)
-
-**Data Flow**:
-```
-Application → OTLP (gRPC) → Collector → {
-    Traces  → Tempo
-    Logs    → Loki
-    Metrics → Prometheus
-}
+```text
+Application
+    |
+    | OTLP
+    v
+OpenTelemetry Collector
+    |
+    +--> Prometheus
+    +--> Loki
+    +--> Tempo
+             |
+             v
+          Grafana
 ```
 
----
+The application sends telemetry to the OpenTelemetry Collector. The collector routes each telemetry signal to its corresponding backend. Grafana is used to inspect and correlate the resulting data.
 
-### 📊 Prometheus (`prometheus/`)
-**Metrics collection and alerting engine** that scrapes and stores time-series data.
+## Main components
 
-**Responsibilities**:
-- Scrapes metrics from OpenTelemetry Collector (port 8889)
-- Monitors service health via Blackbox Exporter
-- Evaluates alerting rules
-- Stores metrics with exemplar support for trace correlation
-- Provides query interface for Grafana
+### OpenTelemetry Collector
 
-**Configuration**:
-- `prometheus/prometheus.yaml`: Scrape configs and feature flags
-- `prometheus/alerts.yaml`: Alerting rules for service availability and performance
+Receives OTLP telemetry and routes traces, logs and metrics to the configured backends.
 
-**Features Enabled**:
-- OTLP write receiver
-- Remote write receiver
-- Exemplar storage (links metrics to traces)
-- Native histograms
+### Prometheus
 
-**Ports**: `9090` (Web UI and API, exposed to host)
+Stores metrics and evaluates alerting rules.
 
----
+### Loki
 
-### 🔍 Tempo (`tempo/`)
-**Distributed tracing backend** optimized for high-volume trace storage.
+Stores and queries logs.
 
-**Responsibilities**:
-- Receives traces from OpenTelemetry Collector via OTLP
-- Stores traces efficiently using object storage format
-- Provides trace query API for Grafana
-- Supports trace-to-logs and trace-to-metrics correlation
+### Tempo
 
-**Configuration**: `tempo/tempo-config.yaml`
+Stores distributed traces and supports trace correlation.
 
-**Ports**:
-- `3200`: HTTP API (Grafana queries here, exposed to host)
-- `4317`: OTLP gRPC receiver (from collector, internal only)
+### Grafana
 
-**Storage**: Local filesystem (`./storage/tempo`)
+Provides dashboards and cross-navigation between metrics, logs and traces.
 
----
+### Blackbox Exporter
 
-###  Loki (`loki/`)
-**Log aggregation system** designed for efficient log storage and querying.
+Probes HTTP and network endpoints for availability.
 
-**Responsibilities**:
-- Receives logs from OpenTelemetry Collector via OTLP
-- Indexes logs by labels (not full-text)
-- Provides LogQL query interface
-- Correlates logs with traces via trace IDs
+### Demo application
 
-**Configuration**: `loki/loki-config.yaml`
+A Node.js/Fastify application instrumented with OpenTelemetry and backed by PostgreSQL.
 
-**Ports**:
-- `3100`: HTTP API (Grafana queries here, exposed to host)
-- OTLP endpoint: `http://loki:3100/otlp/v1/logs`
+## Running the lab
 
-**Storage**: Local filesystem (`./storage/loki`)
+Requirements:
 
----
+- Docker
+- Docker Compose
+- Node.js 22 or newer
 
-### 📈 Grafana (`grafana/`)
-**Unified observability platform** for visualization and exploration.
+Start the full environment:
 
-**Responsibilities**:
-- Visualizes metrics from Prometheus
-- Explores traces from Tempo
-- Queries logs from Loki
-- Displays alerts and dashboards
-- Correlates traces, logs, and metrics
-
-**Configuration**:
-- `grafana/provisioning/datasources/`: Datasource configurations
-- `grafana/provisioning/dashboards/`: Dashboard provisioning
-- `grafana/dashboards/`: Dashboard JSON files
-- `grafana/alerting/`: Alert rules
-
-**Dashboards**:
-1. **Service Monitoring Dashboard**: Infrastructure health and blackbox monitoring
-2. **HTTP Metrics OpenTelemetry**: Application performance metrics
-3. **Traces Overview**: Quick access to tracing tools
-
-**Datasources**:
-- **Prometheus**: Metrics and alerting
-- **Loki**: Log aggregation with trace correlation
-- **Tempo**: Distributed tracing with service maps
-
-**Ports**: `3000` (Web UI, exposed to host)
-
-**Access**: http://localhost:3000 (auto-login enabled as Admin)
-
----
-
-### 🔲 Blackbox Exporter (`blackbox/`)
-**External monitoring** for service availability and performance.
-
-**Responsibilities**:
-- Probes HTTP endpoints for availability and response time
-- Tests TCP connectivity (databases)
-- Performs ICMP pings for network connectivity
-- Exposes probe results as Prometheus metrics
-
-**Configuration**: `blackbox/blackbox.yaml`
-
-**Probe Modules**:
-- `http_2xx`: HTTP health checks
-- `tcp_connect`: TCP port connectivity
-- `icmp_ping`: Network reachability
-
-**Ports**: `9115` (Metrics endpoint, exposed to host)
-
----
-
-### 🗄️ Demo Application (`_alumnus/`)
-**Sample Node.js application** demonstrating OpenTelemetry instrumentation.
-
-**Features**:
-- Fastify web framework
-- PostgreSQL database integration
-- Full OpenTelemetry instrumentation (traces, metrics, logs)
-- Auto-instrumentation for HTTP, database, and framework
-- Custom span attributes and metrics
-
-**Instrumentation**:
-- Uses `@opentelemetry/sdk-node` for automatic instrumentation
-- Sends all telemetry to OpenTelemetry Collector via OTLP/gRPC
-- Includes Knex and Fastify instrumentations
-
-**Endpoints**:
-- `GET /health`: Health check
-- `GET /students`: Sample endpoint with database queries
-
-**Ports**: `9000` (HTTP API, exposed to host)
-
-**Database**: `alumnus-postgres` (PostgreSQL 16)
-- **Host Port**: `5433` (mapped to container port 5432)
-- **Connection**: `postgresql://alumnus:alumnus_dev_password@localhost:5433/alumnus_app`
-- **Internal Connection**: `postgresql://alumnus:alumnus_dev_password@alumnus-postgres:5432/alumnus_app`
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Docker and Docker Compose
-- Node.js 22+ (for running tests locally)
-
-### Docker Compose Files
-
-This project uses multiple Docker Compose files for different purposes:
-
-- **`docker-compose.yaml`**: Main compose file that includes the infrastructure and spins up the demo application
-- **`docker-compose-infra.yaml`**: Infrastructure-only services (for running tests locally without the app)
-- **`docker-compose.test.yaml`**: Runs the E2E tests in a containerized environment (includes infrastructure + test runner)
-- **`_alumnus/`**: Contains the demo application code and tests
-
-### Starting the Infrastructure
-
-**Option 1: Full Stack (Infrastructure + Demo App)**
 ```bash
-# Starts all infrastructure services AND the demo application
 docker compose up
-
-# Check service status
-docker compose ps
 ```
 
-**Option 2: Infrastructure Only (for local testing)**
-```bash
-# Starts only the infrastructure services (no demo app)
-# Useful when you want to run tests locally against the infrastructure
-docker compose -f docker-compose-infra.yaml up
+Run the application tests locally:
 
-# In another terminal, run tests
+```bash
 cd _alumnus
 npm test
 ```
 
-**Option 3: Run Tests in Container**
+Run the containerized test environment when available:
+
 ```bash
-# Runs tests in a containerized environment with all dependencies
-# This is what CI/CD uses - ensures consistent test environment
 docker compose -f docker-compose.test.yaml up --abort-on-container-exit
-
 ```
 
+## MCP usage
 
-### Accessing Services
+The repository includes examples for querying observability data through MCP.
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| Grafana | http://localhost:3000 | Main observability dashboard |
-| Prometheus | http://localhost:9090 | Metrics and alerts |
-| Tempo | http://localhost:3200 | Tempo API |
-| Loki | http://localhost:3100 | Loki API |
-| Demo App | http://localhost:9000 | Sample application |
-| Demo App PostgreSQL | localhost:5433 | PostgreSQL database (user: alumnus, db: alumnus_app) |
-| OTel Collector (gRPC) | localhost:4317 | OTLP receiver endpoint |
-| OTel Collector (metrics) | http://localhost:8889/metrics | Collector's own metrics |
-| Blackbox Exporter | http://localhost:9115 | Probe metrics |
+See:
 
-### Configuring MCP Integration
-
-After starting the infrastructure with `pnpm alumnus:infra:up`, you can integrate Grafana with Windsurf's MCP (Model Context Protocol) to query metrics, logs, traces, and alerts directly from your IDE.
-
-**Add this configuration to your Windsurf MCP config** (`~/.codeium/windsurf/mcp_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "grafana": {
-			"type": "sse",
-			"url": "http://localhost:8000/mcp"
-		}
-}
+```text
+docs/grafana-mcp-prompts.md
 ```
 
-**Example Prompts to Try:**
+Example questions include:
 
-```
-List all currently firing alerts from Prometheus
+- Which alerts are firing?
+- Which endpoints have the highest latency?
+- Are there errors correlated with a specific trace?
+- Which database operations are slow?
 
-Query Prometheus for HTTP request rate from the alumnus application over the last hour
+## Why I keep this repository public
 
-Search Loki logs for error messages in the last 30 minutes with trace IDs
+The value of this repository is the hands-on study of observability concepts and the interaction between telemetry systems and MCP tooling.
 
-Find slow database queries in Tempo traces where PostgreSQL operations took longer than 500ms
+I do not present the upstream example itself as original work. The repository is useful as evidence of the environment I studied, configured and explored.
 
-Query Tempo directly for traces with high latency in the last hour
-```
+## Notes
 
-For more example prompts and use cases, see [`grafana-mcp-prompts.md`](./docs/grafana-mcp-prompts.md).
-
-### Stopping Services
-
-```bash
-# Stop all services
-docker compose down
-
-# Stop and remove volumes
-docker compose down -v
-```
-
----
-
-## 📊 Monitoring & Alerting
-
-### Monitored Services
-
-#### HTTP Health Checks (via Blackbox)
-- Grafana: `http://grafana:3000/api/health`
-- Prometheus: `http://prometheus:9090/-/healthy`
-- Loki: `http://loki:3100/ready`
-- Tempo: `http://tempo:3200/ready`
-
-#### TCP Connectivity
-- PostgreSQL: `postgres:5432`
-- Demo App PostgreSQL: `alumnus-postgres:5432`
-
-#### Network Connectivity (ICMP)
-All services are monitored via ICMP ping for basic network reachability.
-
-#### OpenTelemetry Collector
-- Monitored via Prometheus scraping on port 8889
-- Exposes metrics about received and exported telemetry
-
-### Alert Rules
-
-**Critical Alerts**:
-- `ServiceDown`: HTTP service unavailable for 1+ minute
-- `DatabaseDown`: Database unreachable for 1+ minute
-- `HighErrorRate`: Error rate > 10% for 5 minutes
-- `OpenTelemetryCollectorDown`: Collector unavailable for 1+ minute
-
-**Warning Alerts**:
-- `ServiceUnreachable`: ICMP ping failure for 2+ minutes
-- `SlowResponseTime`: Response time > 1s for 5 minutes
-- `HighMemoryUsage`: Memory usage > 80%
-
-**Configuration**: See `prometheus/alerts.yaml` and `grafana/alerting/alerts.yaml`
-
-## 🔗 Data Correlation
-
-### Traces → Logs
-- Trace IDs are automatically extracted from logs
-- Click trace ID in Loki to jump to Tempo
-- Configured via Loki's `derivedFields`
-
-### Traces → Metrics
-- Exemplars link metrics to traces
-- Prometheus stores trace IDs with metric samples
-- Click exemplar in Grafana to view trace
-
-### Logs → Traces
-- Tempo's `tracesToLogsV2` configuration
-- Automatically queries Loki for logs matching trace ID
-- Shows logs in trace timeline
-
----
-
-## 📁 Directory Structure
-
-```
-infra/
-├── README.md                          # This file
-├── docker-compose.yml                 # Infrastructure services
-│
-├── _alumnus/                          # Sample application
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-│       ├── index.js                   # Application code
-│       ├── otel.js                    # OpenTelemetry setup
-│       └── db.js                      # Database connection
-│
-├── otel-collector/
-│   └── otel-collector-config.yaml     # Collector configuration
-│
-├── prometheus/
-│   ├── prometheus.yaml                # Scrape configs
-│   └── alerts.yaml                    # Alert rules
-│
-├── tempo/
-│   └── tempo-config.yaml              # Tempo configuration
-│
-├── loki/
-│   └── loki-config.yaml               # Loki configuration
-│
-├── blackbox/
-│   └── blackbox.yaml                  # Probe configurations
-│
-└── grafana/
-    ├── provisioning/
-    │   ├── datasources/
-    │   │   └── datasources.yaml       # Datasource configs
-    │   └── dashboards/
-    │       └── dashboards.yaml        # Dashboard provisioning
-    ├── dashboards/
-    │   ├── service-monitoring.json    # Infrastructure dashboard
-    │   └── app-metrics.json           # Application metrics
-    └── alerting/
-        └── alerts.yaml                # Grafana alert rules
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### OpenTelemetry Collector Not Receiving Data
-
-**Check application configuration**:
-```bash
-# Verify OTLP endpoint
-echo $OTEL_EXPORTER_OTLP_ENDPOINT
-# Should be: http://opentelemetry-collector:4317
-```
-
-**Check collector logs**:
-```bash
-docker compose logs opentelemetry-collector
-```
-
-### Traces Not Appearing in Tempo
-
-**Verify collector is forwarding traces**:
-```bash
-# Check collector metrics
-curl http://localhost:8889/metrics | grep otelcol_exporter_sent_spans
-```
-
-**Check Tempo logs**:
-```bash
-docker compose logs tempo
-```
-
-### Metrics Not in Prometheus
-
-**Check Prometheus targets**:
-- Visit http://localhost:9090/targets
-- Ensure `otel-collector-metrics` target is UP
-
-**Check collector metrics endpoint**:
-```bash
-curl http://localhost:8889/metrics
-```
-
-### Logs Not in Loki
-
-**Verify Loki is receiving data**:
-```bash
-# Check Loki metrics
-curl http://localhost:3100/metrics | grep loki_distributor_lines_received_total
-```
-
-**Check collector logs for errors**:
-```bash
-docker compose logs opentelemetry-collector | grep -i loki
-```
-
-### Grafana Datasource Issues
-
-**Recreate Grafana container**:
-```bash
-docker compose up -d --force-recreate grafana
-```
-
-**Check datasource health**:
-- Grafana → Configuration → Data sources
-- Test each datasource connection
-
----
-
-## 📚 Additional Resources
-
-### Documentation
-- [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
-- [Prometheus](https://prometheus.io/docs/)
-- [Grafana Tempo](https://grafana.com/docs/tempo/)
-- [Grafana Loki](https://grafana.com/docs/loki/)
-- [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter)
-
----
+Some configuration is intended for local development and demonstration. Review credentials, ports and storage settings before adapting this environment to another context.
