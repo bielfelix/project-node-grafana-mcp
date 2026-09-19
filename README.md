@@ -133,7 +133,7 @@ Example questions include:
 
 The value of this repository is the hands-on technical implementation of observability concepts and the interaction between telemetry systems and MCP tooling.
 
-I do not present the upstream example itself as original work. The repository is useful as evidence of the environment I studied, configured and explored.
+I do not present the upstream example itself as original work. The repository is useful as evidence of the environment I configured, instrumented and evaluated.
 
 ## Notes
 
