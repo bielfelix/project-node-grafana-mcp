@@ -81,10 +81,16 @@ Requirements:
 - Docker Compose
 - Node.js 22 or newer
 
-Start the full environment:
+Start the observability infrastructure:
 
 ```bash
-docker compose up
+npm run docker:infra:up
+```
+
+Follow the infrastructure logs when needed:
+
+```bash
+npm run docker:infra:logs
 ```
 
 Run the application tests locally:
@@ -94,10 +100,16 @@ cd _alumnus
 npm test
 ```
 
-Run the containerized test environment when available:
+Run the containerized integration test environment:
 
 ```bash
-docker compose -f docker-compose.test.yaml up --abort-on-container-exit
+npm run test:docker
+```
+
+Clean it up afterwards:
+
+```bash
+npm run test:docker:down
 ```
 
 ## MCP usage
