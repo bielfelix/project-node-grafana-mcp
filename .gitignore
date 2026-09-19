@@ -1,0 +1,11 @@
+node_modules/
+_alumnus/node_modules/
+
+.env
+.env.*
+!.env.example
+
+infra/storage/
+coverage/
+*.log
+.DS_Store
