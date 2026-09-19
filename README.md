@@ -138,3 +138,8 @@ I do not present the upstream example itself as original work. The repository is
 ## Notes
 
 Some configuration is intended for local development and demonstration. Review credentials, ports and storage settings before adapting this environment to another context.
+
+
+## License and distribution
+
+The upstream course repository is published under CC BY-NC-ND 4.0. Its LICENSE.md states that modified or adapted versions may not be distributed under the NoDerivatives condition. See [NOTICE.md](NOTICE.md) for the provenance and licensing note.
