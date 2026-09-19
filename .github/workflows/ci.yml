@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _alumnus/package-lock.json
+
+      - name: Install demo application dependencies
+        working-directory: _alumnus
+        run: npm ci
+
+      - name: Check TypeScript syntax
+        working-directory: _alumnus
+        run: find src test -name '*.ts' -print0 | xargs -0 -n1 node --experimental-strip-types --check
+
+      - name: Validate infrastructure compose file
+        run: docker compose -f infra/docker-compose-infra.yaml config --quiet
+
+      - name: Validate integration-test compose file
+        run: docker compose -f infra/docker-compose-test.yaml config --quiet
